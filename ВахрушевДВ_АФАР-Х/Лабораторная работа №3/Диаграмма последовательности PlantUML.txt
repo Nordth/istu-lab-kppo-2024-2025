@@ -1,0 +1,34 @@
+//www.plantuml.com/plantuml/png/fLL1RjD05DtFAOQkG9KlW53LWo1L5XsAHU94ZX5YbyGBg8A01H8iK0k20nY8oJIEdIlykH5l_ZHrF792WOMjkfx_td_l_UySZz8mIP_rU-9E-aJrbUo7oKY8D4fxIj9NCp5JogcYcdxGad9fnbJGBzAqSWyvVQVQJCrC7j1x-yfa-6zbPdHr8CGGsD6ZQ1Z6ATv_f0gb1Uw56H_8S2HLV1R5IYNUmK-WcvkCIlDwDo43F1yaJwFuxAG_E5LxG6YDcWcLW9gpb1oo2lkAfVsasXqPMxKCF5995FPEXeCazN3VqJTSd_bK-3ZSspkJu5f1yHJDQz9SbweUl4wJ5q9iB931KKkDF3oyB-a3zAvHYEubLTQ1h1s9oHx6VvL9YmESMq8TvQLDXutApKi0qWA0IwkAj1apAzWRtnPDYvIBBJYWiq4Ezi9C-LZk1ichknOtiKwXqsntx2s61q7WA8B0KG0SJWFDOsZBHbbBDrTZrccDwbTMcZNPpatTwbhxQdqtZvfaWVY5QfoVirsQ2idEbQJPsgaTjstDipsxTHT9k5GMheKLmbnkWEy9qHiCXZQwsdbRWOtRr91JsfGqBHmFNoWIikdrjdFW1zOnuEODWFzl2Ben_obslnTlnpfKTgqiKBoSVPGB9EKMijpuwv2md-QS2hifU_QqeysjR89RjzbKTNzDBjt-CXRRxq_5rPychSM165eaNXpucsDWbfe7KKk--RpchL3nQVCjx4AMRFFwkl_p6vkflbaXFEss-1WC-9dx3G00
+
+@startuml
+!theme mars
+
+title Установка режима работы "Дежурный"
+
+participant "Инженер" as engineer
+participant "Модуль режима работы" as working_mode
+participant "Модуль последовательного порта" as serial_port
+participant "АФАР" as afar
+participant "Модуль телеметрии" as telemetry
+
+engineer -> working_mode ++: Запрос на установку\nрежима работы "Дежурный"
+working_mode -> serial_port ++: Передача закодированного запроса
+serial_port -> afar ++: Отправка запроса на смену режима работы
+serial_port <-- afar --: Ответ на запрос
+working_mode <-- serial_port --: Успешность отправки запроса
+
+working_mode ->> telemetry: Создание валидатора смены режима работы (через замыкание)
+
+loop Пока не пришло изменение
+  telemetry -> serial_port ++: Передача запроса на телеметрию
+  serial_port -> afar ++: Отправка запроса на телеметрию
+  serial_port <-- afar --: Ответ на запрос
+  serial_port --> working_mode: Передача телеметрии
+  working_mode -> working_mode: Обновление текущего\nрежима работы
+  serial_port --> telemetry --: Передача телеметрии
+  telemetry -> working_mode ++: Проверка изменений (через замыкание)
+  telemetry <-- working_mode --: Ответ: произошли ли изменения
+end
+
+engineer <-- working_mode -- : Оповещение о смене режима работы
+@enduml
